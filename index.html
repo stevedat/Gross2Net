@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tính Lương Gross to Net và Net to Gross</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .calculator {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .calculator input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .calculator button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .calculator button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .highlight {
+            background-color: #e0f7fa;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <h2>Tính Lương Gross to Net và Net to Gross</h2>
+    <label for="salary">Nhập số lương:</label>
+    <input type="number" id="salary" placeholder="Nhập số lương">
+    <label for="insuranceSalary">Nhập lương cơ bản đóng bảo hiểm:</label>
+    <input type="number" id="insuranceSalary" placeholder="Nhập lương cơ bản đóng bảo hiểm">
+    <label for="dependents">Nhập số người phụ thuộc:</label>
+    <input type="number" id="dependents" placeholder="Nhập số người phụ thuộc">
+    <button onclick="calculateGrossToNet()">Tính Gross to Net</button>
+    <button onclick="calculateNetToGross()">Tính Net to Gross</button>
+    <div class="result" id="result"></div>
+    <table id="detailsTable">
+        <thead>
+            <tr>
+                <th>Khoản mục</th>
+                <th>Số tiền (VND)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Kết quả chi tiết sẽ được hiển thị ở đây -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const personalDeduction = 11000000; // Giảm trừ gia cảnh bản thân
+    const dependentDeduction = 4400000; // Giảm trừ gia cảnh cho mỗi người phụ thuộc
+
+    function calculateGrossToNet() {
+        const grossSalary = parseFloat(document.getElementById('salary').value);
+        const insuranceSalary = parseFloat(document.getElementById('insuranceSalary').value);
+        const dependents = parseInt(document.getElementById('dependents').value) || 0;
+
+        if (isNaN(grossSalary) || isNaN(insuranceSalary)) {
+            alert("Vui lòng nhập số lương và lương cơ bản đóng bảo hiểm hợp lệ");
+            return;
+        }
+
+        // Các khoản giảm trừ theo luật Việt Nam
+        const socialInsurance = insuranceSalary * 0.08; // Bảo hiểm xã hội 8%
+        const healthInsurance = insuranceSalary * 0.015; // Bảo hiểm y tế 1.5%
+        const unemploymentInsurance = insuranceSalary * 0.01; // Bảo hiểm thất nghiệp 1%
+        const totalDeduction = personalDeduction + (dependents * dependentDeduction); // Tổng giảm trừ
+
+        const taxableIncome = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance) - totalDeduction;
+        const tax = calculateTax(taxableIncome);
+
+        const netSalary = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance + tax);
+
+        // Hiển thị kết quả chi tiết
+        displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction);
+    }
+
+    function calculateNetToGross() {
+        const netSalary = parseFloat(document.getElementById('salary').value);
+        const insuranceSalary = parseFloat(document.getElementById('insuranceSalary').value);
+        const dependents = parseInt(document.getElementById('dependents').value) || 0;
+
+        if (isNaN(netSalary) || isNaN(insuranceSalary)) {
+            alert("Vui lòng nhập số lương và lương cơ bản đóng bảo hiểm hợp lệ");
+            return;
+        }
+
+        const totalDeduction = personalDeduction + (dependents * dependentDeduction); // Tổng giảm trừ
+        let grossSalary = netSalary;
+        let tax = 0;
+
+        // Tính toán lặp để tìm grossSalary
+        for (let i = 0; i < 100; i++) {
+            const socialInsurance = insuranceSalary * 0.08;
+            const healthInsurance = insuranceSalary * 0.015;
+            const unemploymentInsurance = insuranceSalary * 0.01;
+            const taxableIncome = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance) - totalDeduction;
+            tax = calculateTax(taxableIncome);
+            const calculatedNet = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance + tax);
+
+            if (Math.abs(calculatedNet - netSalary) < 1000) {
+                break;
+            }
+
+            grossSalary += (netSalary - calculatedNet);
+        }
+
+        // Hiển thị kết quả chi tiết
+        displayDetails(grossSalary, insuranceSalary * 0.08, insuranceSalary * 0.015, insuranceSalary * 0.01, tax, netSalary, totalDeduction);
+    }
+
+    function calculateTax(taxableIncome) {
+        if (taxableIncome <= 0) return 0;
+
+        const taxBrackets = [
+            { limit: 5000000, rate: 0.05 },
+            { limit: 10000000, rate: 0.1 },
+            { limit: 18000000, rate: 0.15 },
+            { limit: 32000000, rate: 0.2 },
+            { limit: 52000000, rate: 0.25 },
+            { limit: 80000000, rate: 0.3 },
+            { limit: Infinity, rate: 0.35 }
+        ];
+
+        let tax = 0;
+        let remainingIncome = taxableIncome;
+
+        for (const bracket of taxBrackets) {
+            if (remainingIncome <= 0) break;
+
+            const taxableAmount = Math.min(remainingIncome, bracket.limit - (bracket.limit === Infinity ? 0 : 5000000));
+            tax += taxableAmount * bracket.rate;
+            remainingIncome -= taxableAmount;
+        }
+
+        return tax;
+    }
+
+    function displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction) {
+        const tableBody = document.querySelector("#detailsTable tbody");
+        tableBody.innerHTML = `
+            <tr>
+                <td>Lương Gross</td>
+                <td>${grossSalary.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Bảo hiểm xã hội (8%)</td>
+                <td>${socialInsurance.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Bảo hiểm y tế (1.5%)</td>
+                <td>${healthInsurance.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Bảo hiểm thất nghiệp (1%)</td>
+                <td>${unemploymentInsurance.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Giảm trừ gia cảnh bản thân</td>
+                <td>${personalDeduction.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Giảm trừ người phụ thuộc</td>
+                <td>${(totalDeduction - personalDeduction).toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Tổng giảm trừ</td>
+                <td>${totalDeduction.toLocaleString()}</td>
+            </tr>
+            <tr>
+                <td>Thuế thu nhập cá nhân</td>
+                <td>${tax.toLocaleString()}</td>
+            </tr>
+            <tr class="highlight">
+                <td>Lương Net</td>
+                <td>${netSalary.toLocaleString()}</td>
+            </tr>
+        `;
+
+        document.getElementById('result').innerHTML = `Lương Net: ${netSalary.toLocaleString()} VND`;
+    }
+</script>
+
+</body>
+</html>
