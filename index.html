@@ -57,6 +57,11 @@
             background-color: #e0f7fa;
             font-weight: bold;
         }
+        .note {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -83,11 +88,16 @@
             <!-- Kết quả chi tiết sẽ được hiển thị ở đây -->
         </tbody>
     </table>
+    <div class="note" id="note"></div>
 </div>
 
 <script>
     const personalDeduction = 11000000; // Giảm trừ gia cảnh bản thân
     const dependentDeduction = 4400000; // Giảm trừ gia cảnh cho mỗi người phụ thuộc
+    const maxInsuranceSalary = 36000000; // Mức trần lương đóng bảo hiểm (36 triệu đồng)
+    const socialInsuranceRate = 0.08; // Tỷ lệ đóng BHXH (8%)
+    const healthInsuranceRate = 0.015; // Tỷ lệ đóng BHYT (1.5%)
+    const unemploymentInsuranceRate = 0.01; // Tỷ lệ đóng BHTN (1%)
 
     function calculateGrossToNet() {
         const grossSalary = parseFloat(document.getElementById('salary').value);
@@ -99,19 +109,24 @@
             return;
         }
 
-        // Các khoản giảm trừ theo luật Việt Nam
-        const socialInsurance = insuranceSalary * 0.08; // Bảo hiểm xã hội 8%
-        const healthInsurance = insuranceSalary * 0.015; // Bảo hiểm y tế 1.5%
-        const unemploymentInsurance = insuranceSalary * 0.01; // Bảo hiểm thất nghiệp 1%
-        const totalDeduction = personalDeduction + (dependents * dependentDeduction); // Tổng giảm trừ
+        // Tính các khoản bảo hiểm dựa trên mức nhập lương cơ bản đóng bảo hiểm và đối chiều mức trần
+        const cappedInsuranceSalary = Math.min(insuranceSalary, maxInsuranceSalary);
+        const socialInsurance = cappedInsuranceSalary * socialInsuranceRate; // BHXH
+        const healthInsurance = cappedInsuranceSalary * healthInsuranceRate; // BHYT
+        const unemploymentInsurance = cappedInsuranceSalary * unemploymentInsuranceRate; // BHTN
 
+        // Tổng giảm trừ
+        const totalDeduction = personalDeduction + (dependents * dependentDeduction);
+
+        // Thu nhập chịu thuế
         const taxableIncome = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance) - totalDeduction;
         const tax = calculateTax(taxableIncome);
 
+        // Lương Net
         const netSalary = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance + tax);
 
         // Hiển thị kết quả chi tiết
-        displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction);
+        displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction, cappedInsuranceSalary);
     }
 
     function calculateNetToGross() {
@@ -124,15 +139,16 @@
             return;
         }
 
-        const totalDeduction = personalDeduction + (dependents * dependentDeduction); // Tổng giảm trừ
+        const cappedInsuranceSalary = Math.min(insuranceSalary, maxInsuranceSalary);
+        const totalDeduction = personalDeduction + (dependents * dependentDeduction);
         let grossSalary = netSalary;
         let tax = 0;
 
         // Tính toán lặp để tìm grossSalary
         for (let i = 0; i < 100; i++) {
-            const socialInsurance = insuranceSalary * 0.08;
-            const healthInsurance = insuranceSalary * 0.015;
-            const unemploymentInsurance = insuranceSalary * 0.01;
+            const socialInsurance = cappedInsuranceSalary * socialInsuranceRate;
+            const healthInsurance = cappedInsuranceSalary * healthInsuranceRate;
+            const unemploymentInsurance = cappedInsuranceSalary * unemploymentInsuranceRate;
             const taxableIncome = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance) - totalDeduction;
             tax = calculateTax(taxableIncome);
             const calculatedNet = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance + tax);
@@ -145,7 +161,7 @@
         }
 
         // Hiển thị kết quả chi tiết
-        displayDetails(grossSalary, insuranceSalary * 0.08, insuranceSalary * 0.015, insuranceSalary * 0.01, tax, netSalary, totalDeduction);
+        displayDetails(grossSalary, cappedInsuranceSalary * socialInsuranceRate, cappedInsuranceSalary * healthInsuranceRate, cappedInsuranceSalary * unemploymentInsuranceRate, tax, netSalary, totalDeduction, cappedInsuranceSalary);
     }
 
     function calculateTax(taxableIncome) {
@@ -175,7 +191,7 @@
         return tax;
     }
 
-    function displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction) {
+    function displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction, cappedInsuranceSalary) {
         const tableBody = document.querySelector("#detailsTable tbody");
         tableBody.innerHTML = `
             <tr>
@@ -217,8 +233,15 @@
         `;
 
         document.getElementById('result').innerHTML = `Lương Net: ${netSalary.toLocaleString()} VND`;
+        document.getElementById('note').innerHTML = `
+            <strong>Ghi chú:</strong><br>
+            - Mức trần lương đóng bảo hiểm: ${maxInsuranceSalary.toLocaleString()} VND/tháng.<br>
+            - Lương cơ bản đóng bảo hiểm được áp dụng: ${cappedInsuranceSalary.toLocaleString()} VND/tháng.<br>
+            - Các khoản bảo hiểm được tính dựa trên mức nhập lương cơ bản đóng bảo hiểm và đối chiều mức trần.
+        `;
     }
 </script>
 
 </body>
 </html>
+``` ▋
