@@ -5,63 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tính Lương Gross to Net và Net to Gross</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .calculator {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .calculator input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .calculator button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .calculator button:hover {
-            background-color: #218838;
-        }
-        .result {
-            margin-top: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .highlight {
-            background-color: #e0f7fa;
-            font-weight: bold;
-        }
-        .note {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 10px;
-        }
+        body{font-family:Arial,sans-serif;margin:20px}.calculator{max-width:600px;margin:0 auto;padding:20px;border:1px solid #ccc;border-radius:5px}.calculator input{width:100%;padding:10px;margin:10px 0;border:1px solid #ccc;border-radius:5px}.calculator button{width:100%;padding:10px;background-color:#28a745;color:#fff;border:none;border-radius:5px;cursor:pointer}.calculator button:hover{background-color:#218838}.result{margin-top:20px}table{width:100%;border-collapse:collapse;margin-top:20px}table,th,td{border:1px solid #ccc}th,td{padding:10px;text-align:left}th{background-color:#f2f2f2}.highlight{background-color:#e0f7fa;font-weight:bold}.note{font-size:0.9em;color:#666;margin-top:10px}
     </style>
 </head>
 <body>
@@ -84,162 +28,18 @@
                 <th>Số tiền (VND)</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- Kết quả chi tiết sẽ được hiển thị ở đây -->
-        </tbody>
+        <tbody></tbody>
     </table>
     <div class="note" id="note"></div>
 </div>
 
 <script>
-    const personalDeduction = 11000000; // Giảm trừ gia cảnh bản thân
-    const dependentDeduction = 4400000; // Giảm trừ gia cảnh cho mỗi người phụ thuộc
-    const maxInsuranceSalary = 36000000; // Mức trần lương đóng bảo hiểm (36 triệu đồng)
-    const socialInsuranceRate = 0.08; // Tỷ lệ đóng BHXH (8%)
-    const healthInsuranceRate = 0.015; // Tỷ lệ đóng BHYT (1.5%)
-    const unemploymentInsuranceRate = 0.01; // Tỷ lệ đóng BHTN (1%)
-
-    function calculateGrossToNet() {
-        const grossSalary = parseFloat(document.getElementById('salary').value);
-        const insuranceSalary = parseFloat(document.getElementById('insuranceSalary').value);
-        const dependents = parseInt(document.getElementById('dependents').value) || 0;
-
-        if (isNaN(grossSalary) || isNaN(insuranceSalary)) {
-            alert("Vui lòng nhập số lương và lương cơ bản đóng bảo hiểm hợp lệ");
-            return;
-        }
-
-        // Tính các khoản bảo hiểm dựa trên mức nhập lương cơ bản đóng bảo hiểm và đối chiều mức trần
-        const cappedInsuranceSalary = Math.min(insuranceSalary, maxInsuranceSalary);
-        const socialInsurance = cappedInsuranceSalary * socialInsuranceRate; // BHXH
-        const healthInsurance = cappedInsuranceSalary * healthInsuranceRate; // BHYT
-        const unemploymentInsurance = cappedInsuranceSalary * unemploymentInsuranceRate; // BHTN
-
-        // Tổng giảm trừ
-        const totalDeduction = personalDeduction + (dependents * dependentDeduction);
-
-        // Thu nhập chịu thuế
-        const taxableIncome = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance) - totalDeduction;
-        const tax = calculateTax(taxableIncome);
-
-        // Lương Net
-        const netSalary = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance + tax);
-
-        // Hiển thị kết quả chi tiết
-        displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction, cappedInsuranceSalary);
-    }
-
-    function calculateNetToGross() {
-        const netSalary = parseFloat(document.getElementById('salary').value);
-        const insuranceSalary = parseFloat(document.getElementById('insuranceSalary').value);
-        const dependents = parseInt(document.getElementById('dependents').value) || 0;
-
-        if (isNaN(netSalary) || isNaN(insuranceSalary)) {
-            alert("Vui lòng nhập số lương và lương cơ bản đóng bảo hiểm hợp lệ");
-            return;
-        }
-
-        const cappedInsuranceSalary = Math.min(insuranceSalary, maxInsuranceSalary);
-        const totalDeduction = personalDeduction + (dependents * dependentDeduction);
-        let grossSalary = netSalary;
-        let tax = 0;
-
-        // Tính toán lặp để tìm grossSalary
-        for (let i = 0; i < 100; i++) {
-            const socialInsurance = cappedInsuranceSalary * socialInsuranceRate;
-            const healthInsurance = cappedInsuranceSalary * healthInsuranceRate;
-            const unemploymentInsurance = cappedInsuranceSalary * unemploymentInsuranceRate;
-            const taxableIncome = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance) - totalDeduction;
-            tax = calculateTax(taxableIncome);
-            const calculatedNet = grossSalary - (socialInsurance + healthInsurance + unemploymentInsurance + tax);
-
-            if (Math.abs(calculatedNet - netSalary) < 1000) {
-                break;
-            }
-
-            grossSalary += (netSalary - calculatedNet);
-        }
-
-        // Hiển thị kết quả chi tiết
-        displayDetails(grossSalary, cappedInsuranceSalary * socialInsuranceRate, cappedInsuranceSalary * healthInsuranceRate, cappedInsuranceSalary * unemploymentInsuranceRate, tax, netSalary, totalDeduction, cappedInsuranceSalary);
-    }
-
-    function calculateTax(taxableIncome) {
-        if (taxableIncome <= 0) return 0;
-
-        const taxBrackets = [
-            { limit: 5000000, rate: 0.05 },
-            { limit: 10000000, rate: 0.1 },
-            { limit: 18000000, rate: 0.15 },
-            { limit: 32000000, rate: 0.2 },
-            { limit: 52000000, rate: 0.25 },
-            { limit: 80000000, rate: 0.3 },
-            { limit: Infinity, rate: 0.35 }
-        ];
-
-        let tax = 0;
-        let remainingIncome = taxableIncome;
-
-        for (const bracket of taxBrackets) {
-            if (remainingIncome <= 0) break;
-
-            const taxableAmount = Math.min(remainingIncome, bracket.limit - (bracket.limit === Infinity ? 0 : 5000000));
-            tax += taxableAmount * bracket.rate;
-            remainingIncome -= taxableAmount;
-        }
-
-        return tax;
-    }
-
-    function displayDetails(grossSalary, socialInsurance, healthInsurance, unemploymentInsurance, tax, netSalary, totalDeduction, cappedInsuranceSalary) {
-        const tableBody = document.querySelector("#detailsTable tbody");
-        tableBody.innerHTML = `
-            <tr>
-                <td>Lương Gross</td>
-                <td>${grossSalary.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td>Bảo hiểm xã hội (8%)</td>
-                <td>${socialInsurance.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td>Bảo hiểm y tế (1.5%)</td>
-                <td>${healthInsurance.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td>Bảo hiểm thất nghiệp (1%)</td>
-                <td>${unemploymentInsurance.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td>Giảm trừ gia cảnh bản thân</td>
-                <td>${personalDeduction.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td>Giảm trừ người phụ thuộc</td>
-                <td>${(totalDeduction - personalDeduction).toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td>Tổng giảm trừ</td>
-                <td>${totalDeduction.toLocaleString()}</td>
-            </tr>
-            <tr>
-                <td>Thuế thu nhập cá nhân</td>
-                <td>${tax.toLocaleString()}</td>
-            </tr>
-            <tr class="highlight">
-                <td>Lương Net</td>
-                <td>${netSalary.toLocaleString()}</td>
-            </tr>
-        `;
-
-        document.getElementById('result').innerHTML = `Lương Net: ${netSalary.toLocaleString()} VND`;
-        document.getElementById('note').innerHTML = `
-            <strong>Ghi chú:</strong><br>
-            - Mức trần lương đóng bảo hiểm: ${maxInsuranceSalary.toLocaleString()} VND/tháng.<br>
-            - Lương cơ bản đóng bảo hiểm được áp dụng: ${cappedInsuranceSalary.toLocaleString()} VND/tháng.<br>
-            - Các khoản bảo hiểm được tính dựa trên mức nhập lương cơ bản đóng bảo hiểm và đối chiều mức trần.
-        `;
-    }
+    const _0x3a4d=["\x74\x6F\x4C\x6F\x63\x61\x6C\x65\x53\x74\x72\x69\x6E\x67","\x69\x6E\x6E\x65\x72\x48\x54\x4D\x4C","\x71\x75\x65\x72\x79\x53\x65\x6C\x65\x63\x74\x6F\x72","\x23\x64\x65\x74\x61\x69\x6C\x73\x54\x61\x62\x6C\x65\x20\x74\x62\x6F\x64\x79","\x6C\x69\x6D\x69\x74","\x6D\x69\x6E","\x76\x61\x6C\x75\x65","\x23\x73\x61\x6C\x61\x72\x79","\x23\x69\x6E\x73\x75\x72\x61\x6E\x63\x65\x53\x61\x6C\x61\x72\x79","\x23\x64\x65\x70\x65\x6E\x64\x65\x6E\x74\x73","\x70\x61\x72\x73\x65\x46\x6C\x6F\x61\x74","\x70\x61\x72\x73\x65\x49\x6E\x74","\x61\x6C\x65\x72\x74","\x56\x75\x69\x20\x6C\xF2\x6E\x67\x20\x6E\x68\xE1\x70\x20\x73\x1F\x20\x6C\x6B\x68\x6F\x6E\x67\x20\x76\xE0\x20\x6C\x6B\x68\x6F\x6E\x67\x20\x63\x6B\x62\x6E\x20\x64\x6B\x68\x69\x6D\x20\x68\x6B\x74","\x6D\x61\x74\x68","\x61\x62\x73","\x72\x61\x74\x65","\x6C\x65\x6E\x67\x74\x68","\x66\x6F\x72","\x72\x65\x6D\x61\x69\x6E\x69\x6E\x67\x49\x6E\x63\x6F\x6D\x65","\x74\x61\x78\x61\x62\x6C\x65\x41\x6D\x6F\x75\x6E\x74","\x74\x61\x78","\x67\x65\x74\x45\x6C\x65\x6D\x65\x6E\x74\x42\x79\x49\x64","\x23\x72\x65\x73\x75\x6C\x74","\x23\x6E\x6F\x74\x65","\x3C\x73\x74\x72\x6F\x6E\x67\x3E\x47\x68\x69\x20\x63\x68\xFA\x3A\x3C\x2F\x73\x74\x72\x6F\x6E\x67\x3E\x3C\x62\x72\x3E","\x2D\x20\x4D\x6B\x20\x74\x72\x6E\x20\x6C\x6B\x68\x6F\x6E\x67\x20\x64\x6B\x68\x69\x6D\x20\x62\x6B\x68\x69\x6D\x3A\x20","\x2F\x74\x68\x6E\x67\x2E\x3C\x62\x72\x3E","\x2D\x20\x4C\x6B\x68\x6F\x6E\x67\x20\x63\x62\x6E\x20\x64\x6B\x68\x69\x6D\x20\x62\x6B\x68\x69\x6D\x20\x64\x63\x20\x70\x68\x69\x6D\x3A\x20","\x2E\x3C\x62\x72\x3E","\x2D\x20\x43\x6B\x20\x6B\x68\x6F\x6E\x20\x62\x6B\x68\x69\x6D\x20\x64\x63\x20\x74\x6E\x68\x20\x64\x61\x20\x74\x72\x6E\x20\x6C\x6B\x68\x6F\x6E\x67\x20\x63\x62\x6E\x20\x64\x6B\x68\x69\x6D\x20\x62\x6B\x68\x69\x6D\x20\x76\x20\x64\x69\x20\x63\x68\x69\x75\x20\x6D\x63\x20\x74\x72\x6E\x2E"];
+    const personalDeduction=11e6,dependentDeduction=44e5,maxInsuranceSalary=36e6,socialInsuranceRate=.08,healthInsuranceRate=.015,unemploymentInsuranceRate=.01;
+    function calculateGrossToNet(){const e=parseFloat(document[_0x3a4d[22]](_0x3a4d[7])[_0x3a4d[6]]),t=parseFloat(document[_0x3a4d[22]](_0x3a4d[8])[_0x3a4d[6]]),n=parseInt(document[_0x3a4d[22]](_0x3a4d[9])[_0x3a4d[6]])||0;if(isNaN(e)||isNaN(t))return alert(_0x3a4d[13]);const r=Math[_0x3a4d[5]](t,maxInsuranceSalary),o=r*socialInsuranceRate,i=r*healthInsuranceRate,a=r*unemploymentInsuranceRate,c=personalDeduction+n*dependentDeduction,s=e-(o+i+a)-c,l=calculateTax(s),d=e-(o+i+a+l);displayDetails(e,o,i,a,l,d,c,r)}
+    function calculateNetToGross(){const e=parseFloat(document[_0x3a4d[22]](_0x3a4d[7])[_0x3a4d[6]]),t=parseFloat(document[_0x3a4d[22]](_0x3a4d[8])[_0x3a4d[6]]),n=parseInt(document[_0x3a4d[22]](_0x3a4d[9])[_0x3a4d[6]])||0;if(isNaN(e)||isNaN(t))return alert(_0x3a4d[13]);const r=Math[_0x3a4d[5]](t,maxInsuranceSalary),o=personalDeduction+n*dependentDeduction;let i=e,a=0;for(let t=0;t<100;t++){const e=r*socialInsuranceRate,c=r*healthInsuranceRate,s=r*unemploymentInsuranceRate,l=i-(e+c+s)-o,d=calculateTax(l),u=i-(e+c+s+d);if(Math[_0x3a4d[14]](u-e)<1e3)break;i+=e-u}displayDetails(i,r*socialInsuranceRate,r*healthInsuranceRate,r*unemploymentInsuranceRate,a,e,o,r)}
+    function calculateTax(e){if(e<=0)return 0;const t=[{limit:5e6,rate:.05},{limit:1e7,rate:.1},{limit:18e6,rate:.15},{limit:32e6,rate:.2},{limit:52e6,rate:.25},{limit:8e7,rate:.3},{limit:1/0,rate:.35}];let n=0,r=e;for(const e of t){if(r<=0)break;const o=Math[_0x3a4d[5]](r,e[_0x3a4d[4]]-(e[_0x3a4d[4]]===1/0?0:5e6));n+=o*e[_0x3a4d[16]],r-=o}return n}
+    function displayDetails(e,t,n,r,o,i,a,c){const s=document[_0x3a4d[2]](_0x3a4d[3]);s[_0x3a4d[1]]=`<tr><td>Lương Gross</td><td>${e[_0x3a4d[0]]()}</td></tr><tr><td>Bảo hiểm xã hội (8%)</td><td>${t[_0x3a4d[0]]()}</td></tr><tr><td>Bảo hiểm y tế (1.5%)</td><td>${n[_0x3a4d[0]]()}</td></tr><tr><td>Bảo hiểm thất nghiệp (1%)</td><td>${r[_0x3a4d[0]]()}</td></tr><tr><td>Giảm trừ gia cảnh bản thân</td><td>${personalDeduction[_0x3a4d[0]]()}</td></tr><tr><td>Giảm trừ người phụ thuộc</td><td>${(a-personalDeduction)[_0x3a4d[0]]()}</td></tr><tr><td>Tổng giảm trừ</td><td>${a[_0x3a4d[0]]()}</td></tr><tr><td>Thuế thu nhập cá nhân</td><td>${o[_0x3a4d[0]]()}</td></tr><tr class="highlight"><td>Lương Net</td><td>${i[_0x3a4d[0]]()}</td></tr>`,document[_0x3a4d[22]](_0x3a4d[23])[_0x3a4d[1]]=`Lương Net: ${i[_0x3a4d[0]]()} VND`,document[_0x3a4d[22]](_0x3a4d[24])[_0x3a4d[1]]=`${_0x3a4d[25]}${_0x3a4d[26]}${maxInsuranceSalary[_0x3a4d[0]]()}${_0x3a4d[27]}${_0x3a4d[28]}${c[_0x3a4d[0]]()}${_0x3a4d[29]}${_0x3a4d[30]}`}
 </script>
 
 </body>
